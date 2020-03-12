@@ -89,8 +89,6 @@ def buildService(credentials: Credentials) -> Resource:
 
 
 if __name__ == '__main__':
-    print('Running\'')
-
     # Getting login credentials, and using them to generate drive service.
     creds: Credentials = getToken()
     drive_service: Resource = buildService(credentials=creds)
