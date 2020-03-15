@@ -32,8 +32,6 @@ while true; do
         # path supplied as argument is invalid, the script does not enter into an infinite
         # loop where it will read the argument every time and print that the path is invalid.
         set -- "" # This statement is equivalent to $1="" and works :p
-        echo "Arguemnt: " $1
-        exit
     fi
 
     if [[ -z $root_dir ]]; then
@@ -46,6 +44,10 @@ while true; do
     if [[ ! -d $root_dir ]]; then
         # Flow of control reaches here only if the path is invalid.
         printf "\nPath supplied as the root directory '${root_dir}' is invalid \n\n"
+
+        # Empty the value of `root_dir` to ensure that the user is made to re-enter this value in
+        # the next iteration of the loop.
+        root_dir=""
     else
         # Converting relative path to absolute path, if the path supplied is the absolute path,
         # it remains unchanged.
