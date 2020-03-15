@@ -95,7 +95,7 @@ while true; do
         break
     elif [ "${input,,}" = "n" ]; then
         printf "Force stopping the script\n\n"
-        exit
+        exit -4
     else
         printf "\nUnexpected input\n\n"
     fi
