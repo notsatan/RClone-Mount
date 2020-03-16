@@ -13,14 +13,14 @@ res=$(rclone config file | grep -o '/.*')
 
 # If the script could not get the location of RClone config file, asking the user to enter the same.
 while true; do
-    if [[ -z "${res}" && ! -e $res ]]; then
-        printf "\nThe path '${res}' points to an invalid location.\n\n  "
-    else
-        # Breaking out of the infinite loop if a file exists at the defined path.
-        break
-    fi
+	if [[ -z "${res}" && ! -e $res ]]; then
+		printf "\nThe path '${res}' points to an invalid location.\n\n  "
+	else
+		# Breaking out of the infinite loop if a file exists at the defined path.
+		break
+	fi
 
-    read -p "Enter full path for RClone Config File: " res
+	read -p "Enter full path for RClone Config File: " res
 done
 
 # Getting the Client ID and Client Secret. Will be asked only once, the same ID
@@ -31,30 +31,30 @@ printf 'Enter details for Google Project\n\n'
 # infinite loops. The loops will be broken only if a non-null value is supplied.
 
 while true; do
-    read -p "Client ID: " client_id
-    if [ ! -z "${client_id}" ]; then
-        break
-    else
-        printf '\nClient ID cannot be a blank string\n'
-    fi
+	read -p "Client ID: " client_id
+	if [ ! -z "${client_id}" ]; then
+		break
+	else
+		printf '\nClient ID cannot be a blank string\n'
+	fi
 done
 
 while true; do
-    read -p "Client Secret: " client_secret
-    if [ ! -z "${client_secret}" ]; then
-        break
-    else
-        printf '\nClient Secret cannot be a blank string\n'
-    fi
+	read -p "Client Secret: " client_secret
+	if [ ! -z "${client_secret}" ]; then
+		break
+	else
+		printf '\nClient Secret cannot be a blank string\n'
+	fi
 done
 
 while true; do
-    read -p 'Enter token to be used to generate configs: ' token
-    if [ ! -z "${token}" ]; then
-        break
-    else
-        printf '\nThe token cannot be a blank string\n'
-    fi
+	read -p 'Enter token to be used to generate configs: ' token
+	if [ ! -z "${token}" ]; then
+		break
+	else
+		printf '\nThe token cannot be a blank string\n'
+	fi
 done
 
 echo -n 'Getting a list of all the drives. This process can take some time'
@@ -82,39 +82,39 @@ token = {${token}}
 "
 
 while true; do
-    # Checking if the argument supplied to script is '-y', if not then asking the user
-    # to enter an input.
-    if [[ "${1,,}" != "-y" ]]; then
-        echo "Are you sure you want to add the configurations for RClone?"
-        read -p "This process cannot be reversed (y/n): " input
-    else
-        input=$1
-    fi
+	# Checking if the argument supplied to script is '-y', if not then asking the user
+	# to enter an input.
+	if [[ "${1,,}" != "-y" ]]; then
+		echo "Are you sure you want to add the configurations for RClone?"
+		read -p "This process cannot be reversed (y/n): " input
+	else
+		input=$1
+	fi
 
-    if [[ "${input,,}" = "y" || "${input,,}" = "-y" ]]; then
-        break
-    elif [ "${input,,}" = "n" ]; then
-        printf "Force stopping the script\n\n"
-        exit -4
-    else
-        printf "\nUnexpected input\n\n"
-    fi
+	if [[ "${input,,}" = "y" || "${input,,}" = "-y" ]]; then
+		break
+	elif [ "${input,,}" = "n" ]; then
+		printf "Force stopping the script\n\n"
+		exit -4
+	else
+		printf "\nUnexpected input\n\n"
+	fi
 done
 
 # Reading data from the Python file two lines at a time.
 cut -f2 $FILENAME | while read driveName; do
-    read driveId
+	read driveId
 
-    # Generating a config for the current drive.
-    tempConf="[${driveName}]"
-    tempConf="${tempConf} ${CONFIG}" # Adding the rest of the configs for each drive.
+	# Generating a config for the current drive.
+	tempConf="[${driveName}]"
+	tempConf="${tempConf} ${CONFIG}" # Adding the rest of the configs for each drive.
 
-    # Finally, adding the drive ID to create a config specific to the teamdrive.
-    tempConf="${tempConf}team_drive = ${driveId}"
+	# Finally, adding the drive ID to create a config specific to the teamdrive.
+	tempConf="${tempConf}team_drive = ${driveId}"
 
-    # Appending the data for the config at the end of the file. Appending with sudo privilege
-    # as a precaution (and there is a possibility that configs might be stored in root).
-    sudo printf "${tempConf}\n\n" >>$res
+	# Appending the data for the config at the end of the file. Appending with sudo privilege
+	# as a precaution (and there is a possibility that configs might be stored in root).
+	sudo printf "${tempConf}\n\n" >>$res
 done
 
 printf "\n\nAdded configs to the token file\n\n"
