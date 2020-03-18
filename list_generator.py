@@ -3,6 +3,7 @@
 
 import pickle
 from os import path
+from re import sub
 from typing import Dict, List
 
 from google.auth.transport.requests import Request
@@ -16,7 +17,7 @@ PICKLE_FILE: str = 'token.pickle'
 CREDENTIALS: str = 'credentials.json'
 
 
-# If modifying these scopes, delete the `token.pickle` file if it exists.
+# If modifying the scope, delete the `token.pickle` file if it exists.
 SCOPES: List[str] = ['https://www.googleapis.com/auth/drive']
 
 # A list containing the paths of the file(s) where the final output is to be written.
@@ -111,10 +112,19 @@ if __name__ == '__main__':
     for file in OUTPUT_FILES:
         with open(file, 'wt', encoding='utf-8') as open_file:
             for drive in drives:
+                # Getting the name of the drive.
+                drive_name = drive.get('name', 'nameless-drive')
+
+                # The valid characters allowed for RClone Config names are
+                # [a-z, A-Z, 0-9, _, -, <space>]
+                # Any other characters won't be allowed, using regex to replace
+                # any other character with an empty space.
+                drive_name = sub(r'[^a-zA-Z0-9_\-]', ' ', drive_name)
+
                 # Writing data in the format:
                 # [drive-name]
                 # [drive-id]
-                open_file.write(drive.get('name', 'nameless-drive') + '\n')
+                open_file.write(drive_name + '\n')
                 open_file.write(drive.get('id', '') + '\n')
 
     # Printing the number of accounts found.
