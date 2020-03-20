@@ -20,7 +20,7 @@ FORCE_ARGUMENT="--force"
 # setting the value of this variable to be an empty string.
 FORCE=""
 
-# THe name of the text file that will contain the ID of the background processes running RClone,
+# The name of the text file that will contain the ID of the background processes running RClone,
 # and the directories that have been mounted.
 MOUNT_FILE="mount.txt"
 
@@ -132,7 +132,7 @@ cut -f2 "${config}" | while read line; do
 	# then `config_name` will be an empty variable.
 	config_name=$(echo "${line}" | grep -o '\[.*\]$')
 
-	if [[ ! -z "${config_name}" ]]; then
+	if [[ -z "${config_name}" ]]; then
 		# If the name of the config is empty (indicating that the value in the particular
 		# line is not the name of a config), jumping to the next line in the file.
 		continue
