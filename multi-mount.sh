@@ -24,6 +24,11 @@ FORCE=""
 # and the directories that have been mounted.
 MOUNT_FILE="mount.txt"
 
+# The amount of seconds the script should sleep once a config is mounted. This is done to get
+# accurate result as to whether a config is mounted sucessfully or not.
+# Recommended sleep time is 2 seconds. Anything above 4 seconds would be an overkill.
+SLEEP=2
+
 # The signing signature, will be present at the top of the mount-file.
 FILE_SIGNATURE=("RClone-Mount v0.3" "Do not make any modifications to this file")
 
@@ -179,15 +184,45 @@ cut -f2 "${config}" | while read line; do
 	# Mounting the directory if it exists.
 	if [[ -d "${root_dir}/${dir_name}" ]]; then
 		# Mounting the config to the created directory in a background process.
-		rclone mount "${config_name}": "${root_dir}/${dir_name}" $MOUNT_FLAGS &
+		rclone mount "${config_name}": "${root_dir}/${dir_name}" $MOUNT_FLAGS 2>/dev/null &
 		# The '&' part at the end of the command, starts a background process instead of
 		# blocking the terminal window.
 
-		# Adding the mount path as a string to the mount file.
-		echo "${root_dir}/${dir_name}" >>"./${MOUNT_FILE}"
+		if [[ $SLEEP -ge 0 ]]; then
+			# Sleeping for the given time. This is done to give time to RClone to throw an
+			# error if the config could not be mounted.
+			sleep $SLEEP
+		fi
 
-		# Printing a message to inform that the config was mounted successfully.
-		echo "Mounted config [${config_name}]"
+		# Once a background process is started, it is assigned an ID, even if the result
+		# of the process was an error, it would still have an ID. Also, if the mount command
+		# above caused an error, the process will be dead by now (hopefully).
+		# Thus checking to see if the process is still running.
+
+		# Incase a process with the ID is still running, simply assuming that it is the same
+		# process and the config is mounted successfully.
+		process=$! # Getting the ID of the last process run in background.
+
+		# Getting the total number of processes running (at the moment) that have the same ID
+		# as the most recent background process. Since there are 32K available PID's (by default),
+		# the chances of another process having the same PID are negligible.
+		running_count=$(ps -A | grep $process | wc -l)
+		# Above command will get a list of the currently running processes, grep will take only
+		# those lines that contain the PID, and then count the total number of lines (with each
+		# line indicating one process).
+
+		# If the config was mounted successfully, it should still be running, and thus, the value
+		# of the vairable should be `1`.
+
+		if [[ $running_count -eq 1 ]]; then
+			# Adding the mount path as a string to the mount file.
+			echo "${root_dir}/${dir_name}" >>"./${MOUNT_FILE}"
+
+			# Printing a message to inform that the config was mounted successfully.
+			echo "Mounted config [${config_name}]"
+		else
+			echo "Failed to mount the config [${config_name}]"
+		fi
 	else
 		# Printing an error message in case the directory could not be found.
 		echo "Could not locate the directory '${root_dir}'"
