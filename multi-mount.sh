@@ -39,20 +39,23 @@ MOUNT_FLAGS="--cache-db-purge --buffer-size 256M --drive-chunk-size 32M --vfs-ca
 #	--vfs-read-chunk-size		: The size of chunks while reading.
 #
 
-# Iterating over each argument supplied, and using the argument if it is valid.
+# Iterating over all arguments supplied, and using them if the argument is valid.
 for argument in "${@}"; do
-	if [[ $argument == $DIR_FLAG* && -z $root_dir ]]; then
+	if [[ $argument == $DIR_FLAG* && -z "${root_dir}" ]]; then
 		# If the root directory is not set already and the argument starts with the flag for root
 		# directory, replacing the flag from the string and taking the rest as the root directory.
-		root_dir=$(echo ${argument} | sed "s/${DIR_FLAG}//g")
+		root_dir=$(echo "${argument}" | sed "s/${DIR_FLAG}//g")
 	elif [[ -z $FORCE && ("${argument,,}" == "${FORCE_ARGUMENT,,}" || "${argument}" == "-F") ]]; then
-		# If the value of force is blank string (same as default), and if the force argument is
+		# If value of `force` is a blank string (same as default), and if the force argument is
 		# supplied, setting the value of the variable to be true.
 		FORCE=true
+
+		# If the `force` argument is supplied, adding flag to allow mounting of a non-empty directory.
+		MOUNT_FLAGS=$MOUNT_FLAGS" --allow-non-empty"
 	fi
 done
 
-if [[ -z $FORCE ]]; then
+if [[ -z "${FORCE}" ]]; then
 	# If the value of force is still an empty string, setting it to be false.
 	FORCE=false
 fi
@@ -103,11 +106,11 @@ while true; do
 		config=$(realpath "${config}")
 
 		# If the converted path points to a file, breaking out of the infinite loop.
-		if [[ -f $config ]]; then
+		if [[ -f "${config}" ]]; then
 			break
 		else
 			echo "Problems while converting into absolute path. Enter the absolute path."
-			echo
+			echo # Blank line to avoid cluttering the screen.
 		fi
 	fi
 done
@@ -160,13 +163,22 @@ cut -f2 "${config}" | while read line; do
 		# Since the error is being redirected to '/dev/null', in case of any error, the output
 		# will be an empty string or if the output does not contain the string 'created directory',
 		# the directory could not be created.
-		echo "Failed to create directory ${dir_name}"
+
+		if [[ $FORCE != true ]]; then
+			# If the mount process is not to be forced, printing an error message and skipping
+			# the mounting of the current config.
+			echo "Failed to create directory ${dir_name}"
+			continue
+		fi
+
+		# If the mount process is to be forced, printing a message indicating that the mounting of
+		# the current config is forced.
+		printf "\tForce mounting the directory '${root_dir}/${dir_name}'\n"
 	fi
 
-	# If the root directory exists, mounting it with the added flags.
-	if [[ -d "${root_dir}" ]]; then
-		# Once the directory is created, mounting the config to the created directory in a
-		# background process.
+	# Mounting the directory if it exists.
+	if [[ -d "${root_dir}/${dir_name}" ]]; then
+		# Mounting the config to the created directory in a background process.
 		rclone mount "${config_name}": "${root_dir}/${dir_name}" $MOUNT_FLAGS &
 		# The '&' part at the end of the command, starts a background process instead of
 		# blocking the terminal window.
@@ -176,6 +188,9 @@ cut -f2 "${config}" | while read line; do
 
 		# Printing a message to inform that the config was mounted successfully.
 		echo "Mounted config [${config_name}]"
+	else
+		# Printing an error message in case the directory could not be found.
+		echo "Could not locate the directory '${root_dir}'"
 	fi
 
 done
