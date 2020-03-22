@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# This script will get a list of all RClone configs in the machine, and mount them inside the
+# This script will get a list of all RClone configs in the device, and mount them inside the
 # root directory. All the configs regardless of their type will be mounted by this script.
 
 # Location of the root directory. A separate directory will be created to use as a mount point
@@ -12,7 +12,8 @@ root_dir=""
 # the directory as the root directory.
 DIR_FLAG="--root="
 
-# Force flag, will be used to indicate that the value is forced.
+# Force flag, will be used to indicate that the value is forced. Alternatively, "-F" can also
+# be supplied as an arguement to have the same impact.
 FORCE_ARGUMENT="--force"
 
 # Will be used to determine if the process of mounting drives to directories should be forced.
@@ -22,6 +23,8 @@ FORCE=""
 
 # The name of the text file that will contain the ID of the background processes running RClone,
 # and the directories that have been mounted.
+# NOTE: If the value of this string is changed, the corresponding value in `unmount.sh` should
+# also be changed.
 MOUNT_FILE="mount.txt"
 
 # The amount of seconds the script should sleep once a config is mounted. This is done to get
