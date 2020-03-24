@@ -50,6 +50,16 @@ if [[ -z "${SILENT}" ]]; then
     SILENT=false
 fi
 
+# Checking if the mount file exists. If the file does not exist, ending this script.
+if [[ ! -e $MOUNT_FILE ]]; then
+    # Printing error message if the script is not in silent mode.
+    if [[ $SILENT != true ]]; then
+        echo "Could not locate the file '${MOUNT_FILE}'."
+    fi
+
+    exit 1
+fi
+
 # Reading the contents of the mount file.
 while IFS= read -r line; do
     if [[ "${line}" == "/"* ]]; then
