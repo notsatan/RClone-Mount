@@ -1,0 +1,19 @@
+# Lines where the FIRST character is a hash (#) will be ignored.
+#
+# This file should ONLY contain the names of the configs that are to be IGNORED.
+# These configs will NOT be mounted or un-mounted by either script.
+# An example of a valid config will be: 
+#       DemonRem
+# And not:
+#       [DemonRem]
+#
+# Use the command `rclone config`, anything under the "name" column is a valid name 
+# for the config.
+# Should contain only ONE config in each line.
+
+# This is an example config, remove it when you're setting up this file for yourself.
+DemonRem
+# The RClone config named 'DemonRem' will now be skipped while auto-mounting and similarly
+# also be skipped while un-mounting.
+
+# Leave atleast ONE line after the last config.
