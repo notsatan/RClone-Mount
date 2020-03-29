@@ -27,6 +27,9 @@ FORCE=""
 # also be changed.
 MOUNT_FILE="mount.txt"
 
+# String containing the name of the ignore file.
+IGNORE_FILE="ignore.conf"
+
 # The amount of seconds the script should sleep once a config is mounted. This is done to get
 # accurate result as to whether a config is mounted sucessfully or not.
 # Recommended sleep time is 2 seconds. Anything above 4 seconds would be an overkill.
@@ -46,6 +49,10 @@ MOUNT_FLAGS="--cache-db-purge --buffer-size 256M --drive-chunk-size 32M --vfs-ca
 # 	--vfs-cache-mode			: Balances upload/download with regards to resource consumption.
 #	--vfs-read-chunk-size		: The size of chunks while reading.
 #
+
+# Array containing the configs that are to be ignored. The name of any config present inside this
+# array won't be mounted while auto-mounting all the configs.
+INGORED_FILES=()
 
 # Iterating over all arguments supplied, and using them if the argument is valid.
 for argument in "${@}"; do
@@ -95,6 +102,24 @@ while true; do
 		fi
 	fi
 done
+
+# Getting a list of all the configs that are to be ignored from the ignore file.
+# Starting by checking if the config file actually exists.
+if [[ -e $IGNORE_FILE ]]; then
+	while IFS= read -r line; do
+		# Stripping leading and ending whitespaces from the line
+		line=$(echo -e "${line}")
+
+		# If the new length of the line is 0, skipping it or if the first character of the
+		# line is a hash symbol (#), skipping the line.
+		if [[ "${#line}" -eq 0 || $(echo -e "${line}" | cut -c1-1) == "#" ]]; then
+			continue
+		fi
+
+		# Adding the line to the array containing configs to be ignored.
+		IGNORED_FILES+=("${line}")
+	done <"${IGNORE_FILE}"
+fi
 
 # Getting the path of the RClone config file.
 config=$(rclone config file | grep -o '/.*')
@@ -152,6 +177,21 @@ cut -f2 "${config}" | while read line; do
 	# If the line contains the name of a valid config, removing the box brackets at the
 	# beginning and ending of the string by replacing them.
 	config_name=$(echo "${config_name}" | sed "s/[][]//g")
+
+	# Checking if config is to be ignored. If the name matches a value in the ignore list,
+	# then skipping the process of mounting the current config.
+	found=false
+	for ignore_config in "${IGNORED_FILES[@]}"; do
+		if [[ "${ignore_config}" == "${config_name}" ]]; then
+			found=true
+			break
+		fi
+	done
+
+	if [[ $found == true ]]; then
+		echo "Ignoring config ${config_name}"
+		continue
+	fi
 
 	# Converting the name of the config to the name of directory inside the root directory.
 	# Since the name of the directory is to be made using the name of the config, replacing
