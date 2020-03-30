@@ -30,6 +30,9 @@ MOUNT_FILE="mount.txt"
 # String containing the name of the ignore file.
 IGNORE_FILE="ignore.conf"
 
+# String containing the name of the rename file.
+RENAME_FILE="rename.conf"
+
 # The amount of seconds the script should sleep once a config is mounted. This is done to get
 # accurate result as to whether a config is mounted sucessfully or not.
 # Recommended sleep time is 2 seconds. Anything above 4 seconds would be an overkill.
@@ -51,8 +54,37 @@ MOUNT_FLAGS="--cache-db-purge --buffer-size 256M --drive-chunk-size 32M --vfs-ca
 #
 
 # Array containing the configs that are to be ignored. The name of any config present inside this
-# array won't be mounted while auto-mounting all the configs.
-INGORED_FILES=()
+# array won't be mounted while auto-mounting all the configs. Can be hard-coded (not recommended).
+IGNORED_FILES=()
+
+# An array that will contain the configs that are to be renamed. Order inside the array is extremely
+# important. Should not be hard-coded.
+RENAME_OLD=()
+
+# An array that will contain the new names that are to be used while mounting the configs to directories.
+# The names for directories will be created using names from this list. Should not be hard-coded.
+RENAME_NEW=()
+
+#
+# Logic explanation:
+#	Both the arrays, `RENAME_OLD` and `RENAME_NEW` are to be used together. They are designed to be
+#	used as a hacky alternate for dictionary.
+#
+#	The value in `RENAME_OLD` will contain the names of the configs that are to be renamed.
+# 	The corresponding value in `RENAME_NEW` will be the name that is to be used instead of the orignal name.
+#
+#	For example, the following values in the two array
+#		RENAME_OLD=("DemonRem" "Test")
+#		RENAME_NEW=("RemDemonic", "P:")
+#
+# 	Will ensure that the config "DemonRem" is mounted to the directory "RemDemonic" inside the root directory,
+#	and similarly, the config "Test" is mounted to the directory "P:" inside the root directory.
+#
+# And yep, I know that this is a very hack-y approach and should never be used for anything crucial.
+# In my defence, welp, it works well enough in this scenario and I see no need to change it
+#
+#	¯\_(ツ)_/¯
+#
 
 # Iterating over all arguments supplied, and using them if the argument is valid.
 for argument in "${@}"; do
@@ -119,6 +151,34 @@ if [[ -e $IGNORE_FILE ]]; then
 		# Adding the line to the array containing configs to be ignored.
 		IGNORED_FILES+=("${line}")
 	done <"${IGNORE_FILE}"
+fi
+
+# Validating the path of the rename file, and parsing it if it exists.
+if [[ -e "${RENAME_FILE}" ]]; then
+	while IFS= read -r line; do
+		# Stripping the leading and trailing white spaces.
+		line=$(echo -e "${line}")
+
+		# If the new length of the line is zero, or if the first character is
+		# hash symbol (#), skipping it
+		if [[ "${#line}" -eq 0 || $(echo "${line}" | cut -c1-1) == "#" ]]; then
+			continue
+		fi
+
+		# Getting the name of the config by getting everything before "->" and then trimming spaces.
+		# The grep query below will also include "->", using sed to remove that.
+		original=$(echo -e $(echo "${line}" | grep -o '.*\->' | sed "s.->..g"))
+
+		# Getting the new name using the same process, extracting everything after "->"
+		new=$(echo -e $(echo "${line}" | grep -o '\->.*' | sed "s.->..g"))
+
+		# If neither of these variables is empty and nor a blank string, adding the value to the arrays.
+		if [[ ! -z "${original}" && ! -z "${new}" ]]; then
+			RENAME_OLD+=("${original}")
+			RENAME_NEW+=("${new}")
+		fi
+
+	done <"${RENAME_FILE}"
 fi
 
 # Getting the path of the RClone config file.
@@ -189,18 +249,40 @@ cut -f2 "${config}" | while read line; do
 	done
 
 	if [[ $found == true ]]; then
-		echo "Ignoring config ${config_name}"
 		continue
 	fi
 
-	# Converting the name of the config to the name of directory inside the root directory.
-	# Since the name of the directory is to be made using the name of the config, replacing
-	# all characters that are not allowed for directory names in Windows.
-	dir_name=$(echo "${config_name}" | sed 's.\\. .g; s./. .g; s.:. .g; s.". .g; s.|. .g')
+	# Resetting the value of the variable. Without this step, often the variable retains
+	# the values from some previous iterations of the loop and causes problems with the rest
+	# of the script.
+	dir_name=""
+
+	# Checking if the config is to be renamed.
+	for i in "${!RENAME_OLD[@]}"; do
+		if [[ "${config_name}" == "${RENAME_OLD[$i]}" ]]; then
+			# If the name of the config is present in the array of configs to be renamed, then
+			# using the value provided as the directory name. Selecting the value at the
+			# corresponding index of `RENAME_NEW` array. Illegal characters from this value
+			# will be removed separately.
+			dir_name="${RENAME_NEW[$i]}"
+			break
+		fi
+	done
+
+	# Setting the name of the directory to be the same as the config if the vairable has no
+	# value (illegal variables will be removed separately)
+	if [[ -z "${dir_name}" ]]; then
+		dir_name="${config_name}"
+	fi
+
+	# Replacing all characters that are not allowed in directory names with spaces.
+	dir_name=$(echo "${dir_name}" | sed 's.\\. .g; s./. .g; s.:. .g; s.". .g; s.|. .g')
 	# For Linux, the a directory name can't contain forward-slash, however, as I'm on
 	# Dual Boot currently (with the other OS being Windows), so I've veto-ed the decision to
 	# forbid any characters that are not allowed in Windows.
 	# Anyone who doesn't want this can make the changes to a fork or to their local copy.
+	#
+	# (O_O;)
 
 	# Creating a directory for the config inside the root directory, and suppressing any
 	# error(s) by redirecting STDERR to '/dev/null'. Also, the verbose flag is important
