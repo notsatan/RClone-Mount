@@ -1,0 +1,28 @@
+# Lines where the FIRST character is a hash (#) will be ignored.
+#
+# This file SHOULD contain the names of the configs that are to be MOUNTED WITH DIFFERENT NAMES
+# While creating directories for these configs inside the root directory, the name of the directory
+# will be taken from THIS FILE instead of using the name of the config.
+#
+# This file should contain data in the form of:
+#       <ORIGINAL NAME OF CONFIG> -> <TITLE FOR THE DIRECTORY>
+#
+# The name of the config should not include the opening or closing square brackets.
+#
+# For example, a valid entry for this file will be:
+#       DemonRem -> DemonRem; Root
+# The above line will ensure that the config `DemonRem` is mounted to a directory named `DemonRem; Root`
+# inside the root directory instead of `DemonRem`.
+#
+# The value on the left side of the "->" except leading or trailing spaces will be treated as the original
+# name of the config, and similarly, any value on the right of the "->" sign except leading and trailing
+# spaces will be used as the name of the directory.
+#
+# If the value on either side of the "->" has nothing except from empty spaces, the entire line will be ignored.
+
+
+# <ENTER THE VALUES BELOW THIS LINE>
+
+
+# Leave atleast ONE LINE after the last value. 
+# Ideally, this comment should be the last line in this file.

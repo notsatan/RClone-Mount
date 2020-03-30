@@ -16,4 +16,8 @@ DemonRem
 # The RClone config named 'DemonRem' will now be skipped while auto-mounting and similarly
 # also be skipped while un-mounting.
 
-# Leave atleast ONE line after the last config.
+
+# <ENTER THE VALUES BELOW THIS LINE>
+
+
+# Leave atleast ONE line after the last config. Ideally, this comment should be the last line in this file.
