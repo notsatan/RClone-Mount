@@ -1,6 +1,6 @@
-*.txt
 *.json
 *.pickle
 \.*
-*.txt
+output.txt
+mount.txt
 *.conf
