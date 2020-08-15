@@ -63,6 +63,13 @@ echo -n 'Getting a list of all the drives. This process can take some time'
 # found attached to the account, extracting this number using `sed` module.
 drives=$(python list_generator.py | grep -o '[0-9]*')
 
+if ! [[ "${drives}" =~ ^[0-9]+$ ]]
+    then
+        echo "Ran into trouble while fetching the list of teamdrives. Retry with correct values :/"
+		exit -4
+	fi
+
+
 # NOTE: Leave all this blank space on the right untouched. Else the prevoius message will
 # be partially overwritten by the new string with some of the old message still visible.
 echo -e '\rFound' ${drives} 'team drives                                                 '
@@ -79,6 +86,7 @@ list_chunk = 1000
 upload_cutoff = 32M
 chunk_size = 32M
 token = {${token}}
+server_side_across_configs = true
 "
 
 while true; do
